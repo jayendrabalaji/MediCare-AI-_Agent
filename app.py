@@ -8,10 +8,26 @@ Deploy free:   push this repo to GitHub, then deploy on
                EMAIL_APP_PASSWORD as Secrets (see README.md).
 """
 
+import os
 import streamlit as st
+
+# Streamlit Cloud "Secrets" don't always auto-populate os.environ depending
+# on version, so we explicitly copy them over here BEFORE importing agent
+# (agent.py reads keys from os.environ at import time).
+for _key in ("GROQ_API_KEY", "EMAIL_SENDER", "EMAIL_APP_PASSWORD"):
+    if _key in st.secrets:
+        os.environ[_key] = st.secrets[_key]
+
 from agent import run_agent
 
 st.set_page_config(page_title="MediCare AI Agent", page_icon="🩺", layout="centered")
+
+# --- Debug panel: confirms whether keys are actually visible to the app ---
+with st.sidebar:
+    st.caption("🔧 Config status (debug)")
+    st.write("GROQ_API_KEY:", "✅ set" if os.environ.get("GROQ_API_KEY") else "❌ missing")
+    st.write("EMAIL_SENDER:", "✅ set" if os.environ.get("EMAIL_SENDER") else "❌ missing")
+    st.write("EMAIL_APP_PASSWORD:", "✅ set" if os.environ.get("EMAIL_APP_PASSWORD") else "❌ missing")
 
 st.title("🩺 MediCare AI Agent")
 st.caption("Patient Symptom Triage & Appointment Guidance Agent — SDG 3: Good Health")
